@@ -15,7 +15,11 @@ export const Route = createFileRoute("/b/$slug")({
     ],
   }),
   loader: async ({ params }) => {
-    const { data: b } = await supabase.from("barbeiros").select("*").eq("slug", params.slug).maybeSingle();
+    const { data: b } = await supabase
+      .from("barbeiros")
+      .select("id, nome_profissional, slug, foto_url, cidade")
+      .eq("slug", params.slug)
+      .maybeSingle();
     if (!b) throw notFound();
     return { barbeiro: b };
   },
