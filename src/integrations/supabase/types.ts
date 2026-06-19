@@ -14,7 +14,213 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agendamentos: {
+        Row: {
+          barbeiro_id: string
+          cliente_nome: string
+          cliente_whatsapp: string
+          criado_em: string
+          data_hora: string
+          duracao_minutos: number
+          id: string
+          preco: number
+          servico_id: string
+          status: string
+        }
+        Insert: {
+          barbeiro_id: string
+          cliente_nome: string
+          cliente_whatsapp: string
+          criado_em?: string
+          data_hora: string
+          duracao_minutos?: number
+          id?: string
+          preco?: number
+          servico_id: string
+          status?: string
+        }
+        Update: {
+          barbeiro_id?: string
+          cliente_nome?: string
+          cliente_whatsapp?: string
+          criado_em?: string
+          data_hora?: string
+          duracao_minutos?: number
+          id?: string
+          preco?: number
+          servico_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barbeiros: {
+        Row: {
+          cidade: string | null
+          criado_em: string
+          email: string
+          foto_url: string | null
+          id: string
+          nome: string
+          nome_profissional: string
+          slug: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          cidade?: string | null
+          criado_em?: string
+          email: string
+          foto_url?: string | null
+          id?: string
+          nome: string
+          nome_profissional: string
+          slug: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          cidade?: string | null
+          criado_em?: string
+          email?: string
+          foto_url?: string | null
+          id?: string
+          nome?: string
+          nome_profissional?: string
+          slug?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          barbeiro_id: string
+          id: string
+          nome: string
+          total_agendamentos: number
+          ultimo_agendamento: string | null
+          whatsapp: string
+        }
+        Insert: {
+          barbeiro_id: string
+          id?: string
+          nome: string
+          total_agendamentos?: number
+          ultimo_agendamento?: string | null
+          whatsapp: string
+        }
+        Update: {
+          barbeiro_id?: string
+          id?: string
+          nome?: string
+          total_agendamentos?: number
+          ultimo_agendamento?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horarios_trabalho: {
+        Row: {
+          ativo: boolean
+          barbeiro_id: string
+          dia_semana: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          intervalo_fim: string | null
+          intervalo_inicio: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          barbeiro_id: string
+          dia_semana: number
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          intervalo_fim?: string | null
+          intervalo_inicio?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          barbeiro_id?: string
+          dia_semana?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          intervalo_fim?: string | null
+          intervalo_inicio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horarios_trabalho_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servicos: {
+        Row: {
+          ativo: boolean
+          barbeiro_id: string
+          criado_em: string
+          duracao_minutos: number
+          id: string
+          nome: string
+          preco: number
+        }
+        Insert: {
+          ativo?: boolean
+          barbeiro_id: string
+          criado_em?: string
+          duracao_minutos?: number
+          id?: string
+          nome: string
+          preco?: number
+        }
+        Update: {
+          ativo?: boolean
+          barbeiro_id?: string
+          criado_em?: string
+          duracao_minutos?: number
+          id?: string
+          nome?: string
+          preco?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicos_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
