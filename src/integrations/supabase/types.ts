@@ -226,7 +226,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_horarios_ocupados: {
+        Args: { p_barbeiro_id: string; p_data: string }
+        Returns: {
+          data_hora: string
+          duracao_minutos: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
