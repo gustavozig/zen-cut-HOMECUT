@@ -52,7 +52,7 @@ function PainelHome() {
   const confirmados = items.filter((i) => i.status === "confirmado" || i.status === "concluido");
   const proximo = items.find((i) => i.status === "confirmado" && new Date(i.data_hora) > new Date());
   const totalDia = items.filter((i) => i.status === "concluido").reduce((s, i) => s + Number(i.preco || 0), 0);
-  const link = `${typeof window !== "undefined" ? window.location.origin : ""}/${barbeiro.slug}`;
+  const link = `${typeof window !== "undefined" ? window.location.origin : ""}/b/${barbeiro.slug}`;
 
   return (
     <div>

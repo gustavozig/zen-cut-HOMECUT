@@ -40,7 +40,7 @@ function Configuracoes() {
 
   if (!barbeiro) return <p style={{ color: "#ADB5BD" }}>Carregando...</p>;
 
-  const link = `${typeof window !== "undefined" ? window.location.origin : ""}/${barbeiro.slug}`;
+  const link = `${typeof window !== "undefined" ? window.location.origin : ""}/b/${barbeiro.slug}`;
 
   async function salvarPerfil() {
     const { error } = await supabase.from("barbeiros").update(perfil).eq("id", barbeiro!.id);
