@@ -55,15 +55,13 @@ function PublicBooking() {
   useEffect(() => {
     if (!selDia) return;
     (async () => {
-      const start = new Date(selDia); start.setHours(0,0,0,0);
-      const end = new Date(selDia); end.setHours(23,59,59,999);
-      const { data } = await supabase
-        .from("agendamentos")
-        .select("data_hora, duracao_minutos")
-        .eq("barbeiro_id", barbeiro.id)
-        .in("status", ["confirmado", "concluido"])
-        .gte("data_hora", start.toISOString())
-        .lte("data_hora", end.toISOString());
+      const y = selDia.getFullYear();
+      const m = String(selDia.getMonth() + 1).padStart(2, "0");
+      const d = String(selDia.getDate()).padStart(2, "0");
+      const { data } = await supabase.rpc("get_horarios_ocupados", {
+        p_barbeiro_id: barbeiro.id,
+        p_data: `${y}-${m}-${d}`,
+      });
       setOcupados((data as { data_hora: string; duracao_minutos: number }[]) ?? []);
     })();
   }, [selDia, barbeiro.id]);
