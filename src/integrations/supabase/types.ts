@@ -226,6 +226,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_barbeiro_publico: {
+        Args: { p_slug: string }
+        Returns: {
+          cidade: string
+          foto_url: string
+          id: string
+          nome_profissional: string
+          slug: string
+        }[]
+      }
       get_horarios_ocupados: {
         Args: { p_barbeiro_id: string; p_data: string }
         Returns: {

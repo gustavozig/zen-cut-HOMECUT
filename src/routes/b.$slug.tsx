@@ -15,11 +15,8 @@ export const Route = createFileRoute("/b/$slug")({
     ],
   }),
   loader: async ({ params }) => {
-    const { data: b } = await supabase
-      .from("barbeiros")
-      .select("id, nome_profissional, slug, foto_url, cidade")
-      .eq("slug", params.slug)
-      .maybeSingle();
+    const { data } = await supabase.rpc("get_barbeiro_publico", { p_slug: params.slug });
+    const b = Array.isArray(data) ? data[0] : null;
     if (!b) throw notFound();
     return { barbeiro: b };
   },
