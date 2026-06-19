@@ -60,13 +60,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "agendamentos_barbeiro_id_fkey"
-            columns: ["barbeiro_id"]
-            isOneToOne: false
-            referencedRelation: "barbeiros_publicos"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "agendamentos_servico_id_fkey"
             columns: ["servico_id"]
             isOneToOne: false
@@ -147,13 +140,6 @@ export type Database = {
             referencedRelation: "barbeiros"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "clientes_barbeiro_id_fkey"
-            columns: ["barbeiro_id"]
-            isOneToOne: false
-            referencedRelation: "barbeiros_publicos"
-            referencedColumns: ["id"]
-          },
         ]
       }
       horarios_trabalho: {
@@ -195,13 +181,6 @@ export type Database = {
             referencedRelation: "barbeiros"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "horarios_trabalho_barbeiro_id_fkey"
-            columns: ["barbeiro_id"]
-            isOneToOne: false
-            referencedRelation: "barbeiros_publicos"
-            referencedColumns: ["id"]
-          },
         ]
       }
       servicos: {
@@ -240,41 +219,11 @@ export type Database = {
             referencedRelation: "barbeiros"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "servicos_barbeiro_id_fkey"
-            columns: ["barbeiro_id"]
-            isOneToOne: false
-            referencedRelation: "barbeiros_publicos"
-            referencedColumns: ["id"]
-          },
         ]
       }
     }
     Views: {
-      barbeiros_publicos: {
-        Row: {
-          cidade: string | null
-          foto_url: string | null
-          id: string | null
-          nome_profissional: string | null
-          slug: string | null
-        }
-        Insert: {
-          cidade?: string | null
-          foto_url?: string | null
-          id?: string | null
-          nome_profissional?: string | null
-          slug?: string | null
-        }
-        Update: {
-          cidade?: string | null
-          foto_url?: string | null
-          id?: string | null
-          nome_profissional?: string | null
-          slug?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_horarios_ocupados: {
