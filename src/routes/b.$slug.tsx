@@ -5,7 +5,7 @@ import { formatBRL } from "@/lib/slug";
 import { Clock, MapPin, CheckCircle2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/$slug")({
+export const Route = createFileRoute("/b/$slug")({
   head: ({ params }) => ({
     meta: [
       { title: `Agendar com ${params.slug} — HomeCUT` },
