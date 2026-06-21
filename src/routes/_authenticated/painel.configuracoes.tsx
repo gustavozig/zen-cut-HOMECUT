@@ -23,12 +23,16 @@ function Configuracoes() {
 
   useEffect(() => {
     if (!barbeiro) return;
+    const b = barbeiro as typeof barbeiro & { zapi_instance_id?: string | null; zapi_token?: string | null; zapi_client_token?: string | null };
     setPerfil({
       nome: barbeiro.nome,
       nome_profissional: barbeiro.nome_profissional,
       whatsapp: barbeiro.whatsapp ?? "",
       cidade: barbeiro.cidade ?? "",
       foto_url: barbeiro.foto_url ?? "",
+      zapi_instance_id: b.zapi_instance_id ?? "",
+      zapi_token: b.zapi_token ?? "",
+      zapi_client_token: b.zapi_client_token ?? "",
     });
     (async () => {
       const { data: s } = await supabase.from("servicos").select("*").eq("barbeiro_id", barbeiro.id).order("criado_em");
