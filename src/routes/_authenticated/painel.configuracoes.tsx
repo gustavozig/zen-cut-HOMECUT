@@ -16,7 +16,7 @@ const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sáb
 
 function Configuracoes() {
   const { barbeiro, reload } = useBarbeiro();
-  const [perfil, setPerfil] = useState({ nome: "", nome_profissional: "", whatsapp: "", cidade: "", foto_url: "" });
+  const [perfil, setPerfil] = useState({ nome: "", nome_profissional: "", whatsapp: "", cidade: "", foto_url: "", zapi_instance_id: "", zapi_token: "", zapi_client_token: "" });
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [novo, setNovo] = useState({ nome: "", duracao_minutos: 30, preco: 0 });
   const [horarios, setHorarios] = useState<Horario[]>([]);
