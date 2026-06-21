@@ -18,6 +18,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPainelIndexRouteImport } from './routes/_authenticated/painel.index'
 import { Route as AuthenticatedPainelFinanceiroRouteImport } from './routes/_authenticated/painel.financeiro'
 import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/painel.configuracoes'
+import { Route as AuthenticatedPainelBloquearRouteImport } from './routes/_authenticated/painel.bloquear'
 import { Route as AuthenticatedPainelAgendaRouteImport } from './routes/_authenticated/painel.agenda'
 
 const LoginRoute = LoginRouteImport.update({
@@ -67,6 +68,12 @@ const AuthenticatedPainelConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelBloquearRoute =
+  AuthenticatedPainelBloquearRouteImport.update({
+    id: '/bloquear',
+    path: '/bloquear',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 const AuthenticatedPainelAgendaRoute =
   AuthenticatedPainelAgendaRouteImport.update({
     id: '/agenda',
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRouteWithChildren
   '/b/$slug': typeof BSlugRoute
   '/painel/agenda': typeof AuthenticatedPainelAgendaRoute
+  '/painel/bloquear': typeof AuthenticatedPainelBloquearRoute
   '/painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/painel/financeiro': typeof AuthenticatedPainelFinanceiroRoute
   '/painel/': typeof AuthenticatedPainelIndexRoute
@@ -91,6 +99,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/b/$slug': typeof BSlugRoute
   '/painel/agenda': typeof AuthenticatedPainelAgendaRoute
+  '/painel/bloquear': typeof AuthenticatedPainelBloquearRoute
   '/painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/painel/financeiro': typeof AuthenticatedPainelFinanceiroRoute
   '/painel': typeof AuthenticatedPainelIndexRoute
@@ -104,6 +113,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRouteWithChildren
   '/b/$slug': typeof BSlugRoute
   '/_authenticated/painel/agenda': typeof AuthenticatedPainelAgendaRoute
+  '/_authenticated/painel/bloquear': typeof AuthenticatedPainelBloquearRoute
   '/_authenticated/painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/_authenticated/painel/financeiro': typeof AuthenticatedPainelFinanceiroRoute
   '/_authenticated/painel/': typeof AuthenticatedPainelIndexRoute
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/b/$slug'
     | '/painel/agenda'
+    | '/painel/bloquear'
     | '/painel/configuracoes'
     | '/painel/financeiro'
     | '/painel/'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/b/$slug'
     | '/painel/agenda'
+    | '/painel/bloquear'
     | '/painel/configuracoes'
     | '/painel/financeiro'
     | '/painel'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/b/$slug'
     | '/_authenticated/painel/agenda'
+    | '/_authenticated/painel/bloquear'
     | '/_authenticated/painel/configuracoes'
     | '/_authenticated/painel/financeiro'
     | '/_authenticated/painel/'
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/painel/bloquear': {
+      id: '/_authenticated/painel/bloquear'
+      path: '/bloquear'
+      fullPath: '/painel/bloquear'
+      preLoaderRoute: typeof AuthenticatedPainelBloquearRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/painel/agenda': {
       id: '/_authenticated/painel/agenda'
       path: '/agenda'
@@ -229,6 +249,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelAgendaRoute: typeof AuthenticatedPainelAgendaRoute
+  AuthenticatedPainelBloquearRoute: typeof AuthenticatedPainelBloquearRoute
   AuthenticatedPainelConfiguracoesRoute: typeof AuthenticatedPainelConfiguracoesRoute
   AuthenticatedPainelFinanceiroRoute: typeof AuthenticatedPainelFinanceiroRoute
   AuthenticatedPainelIndexRoute: typeof AuthenticatedPainelIndexRoute
@@ -236,6 +257,7 @@ interface AuthenticatedPainelRouteChildren {
 
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
   AuthenticatedPainelAgendaRoute: AuthenticatedPainelAgendaRoute,
+  AuthenticatedPainelBloquearRoute: AuthenticatedPainelBloquearRoute,
   AuthenticatedPainelConfiguracoesRoute: AuthenticatedPainelConfiguracoesRoute,
   AuthenticatedPainelFinanceiroRoute: AuthenticatedPainelFinanceiroRoute,
   AuthenticatedPainelIndexRoute: AuthenticatedPainelIndexRoute,

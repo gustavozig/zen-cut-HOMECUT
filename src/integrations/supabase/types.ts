@@ -80,6 +80,9 @@ export type Database = {
           slug: string
           user_id: string
           whatsapp: string | null
+          zapi_client_token: string | null
+          zapi_instance_id: string | null
+          zapi_token: string | null
         }
         Insert: {
           cidade?: string | null
@@ -92,6 +95,9 @@ export type Database = {
           slug: string
           user_id: string
           whatsapp?: string | null
+          zapi_client_token?: string | null
+          zapi_instance_id?: string | null
+          zapi_token?: string | null
         }
         Update: {
           cidade?: string | null
@@ -104,6 +110,9 @@ export type Database = {
           slug?: string
           user_id?: string
           whatsapp?: string | null
+          zapi_client_token?: string | null
+          zapi_instance_id?: string | null
+          zapi_token?: string | null
         }
         Relationships: []
       }
@@ -135,6 +144,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "clientes_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dias_bloqueados: {
+        Row: {
+          barbeiro_id: string
+          criado_em: string
+          data: string
+          id: string
+        }
+        Insert: {
+          barbeiro_id: string
+          criado_em?: string
+          data: string
+          id?: string
+        }
+        Update: {
+          barbeiro_id?: string
+          criado_em?: string
+          data?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dias_bloqueados_barbeiro_id_fkey"
             columns: ["barbeiro_id"]
             isOneToOne: false
             referencedRelation: "barbeiros"
@@ -234,6 +272,12 @@ export type Database = {
           id: string
           nome_profissional: string
           slug: string
+        }[]
+      }
+      get_dias_bloqueados: {
+        Args: { p_barbeiro_id: string }
+        Returns: {
+          data: string
         }[]
       }
       get_horarios_ocupados: {

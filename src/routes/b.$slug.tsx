@@ -2,7 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/slug";
-import { Clock, MapPin, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Clock, MapPin, CheckCircle2, ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/b/$slug")({
@@ -28,12 +28,16 @@ export const Route = createFileRoute("/b/$slug")({
 type Servico = { id: string; nome: string; duracao_minutos: number; preco: number; ativo: boolean };
 type Horario = { dia_semana: number; hora_inicio: string; hora_fim: string; intervalo_inicio: string | null; intervalo_fim: string | null; ativo: boolean };
 
+const MIN_ADVANCE_MS = 30 * 60 * 1000;
+const MAX_DAYS_AHEAD = 30;
+
 function PublicBooking() {
   const { barbeiro } = Route.useLoaderData();
   const [step, setStep] = useState<"servico" | "dia" | "horario" | "dados" | "sucesso">("servico");
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [ocupados, setOcupados] = useState<{ data_hora: string; duracao_minutos: number }[]>([]);
+  const [bloqueados, setBloqueados] = useState<Set<string>>(new Set());
   const [selServico, setSelServico] = useState<Servico | null>(null);
   const [selDia, setSelDia] = useState<Date | null>(null);
   const [selHora, setSelHora] = useState<Date | null>(null);
@@ -46,6 +50,10 @@ function PublicBooking() {
       setServicos((s as Servico[]) ?? []);
       const { data: h } = await supabase.from("horarios_trabalho").select("*").eq("barbeiro_id", barbeiro.id).eq("ativo", true);
       setHorarios((h as Horario[]) ?? []);
+      const { data: b } = await supabase.rpc("get_dias_bloqueados", { p_barbeiro_id: barbeiro.id });
+      const set = new Set<string>();
+      (b as { data: string }[] | null)?.forEach((d) => set.add(d.data));
+      setBloqueados(set);
     })();
   }, [barbeiro.id]);
 
@@ -63,28 +71,32 @@ function PublicBooking() {
     })();
   }, [selDia, barbeiro.id]);
 
-  // Próximos 14 dias com horários ativos
+  // Próximos 30 dias com horários ativos e não bloqueados
   const dias = useMemo(() => {
     const arr: Date[] = [];
-    const today = new Date(); today.setHours(0,0,0,0);
-    for (let i = 0; i < 14; i++) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    for (let i = 0; i <= MAX_DAYS_AHEAD; i++) {
       const d = new Date(today); d.setDate(d.getDate() + i);
       const h = horarios.find((x) => x.dia_semana === d.getDay());
-      if (h) arr.push(d);
+      if (!h) continue;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (bloqueados.has(key)) continue;
+      arr.push(d);
     }
     return arr;
-  }, [horarios]);
+  }, [horarios, bloqueados]);
 
-  const slots = useMemo(() => {
-    if (!selDia || !selServico) return [] as Date[];
+  type Slot = { time: Date; ocupado: boolean; available: boolean };
+  const slots = useMemo<Slot[]>(() => {
+    if (!selDia || !selServico) return [];
     const h = horarios.find((x) => x.dia_semana === selDia.getDay());
     if (!h) return [];
     const [hi, mi] = h.hora_inicio.split(":").map(Number);
     const [hf, mf] = h.hora_fim.split(":").map(Number);
     const start = new Date(selDia); start.setHours(hi, mi, 0, 0);
     const end = new Date(selDia); end.setHours(hf, mf, 0, 0);
-    const step = selServico.duracao_minutos;
-    const now = new Date();
+    const stepMin = selServico.duracao_minutos;
+    const minAllowed = new Date(Date.now() + MIN_ADVANCE_MS);
 
     let lunchStart: Date | null = null, lunchEnd: Date | null = null;
     if (h.intervalo_inicio && h.intervalo_fim) {
@@ -94,19 +106,17 @@ function PublicBooking() {
       lunchEnd = new Date(selDia); lunchEnd.setHours(le, lem, 0, 0);
     }
 
-    const out: Date[] = [];
-    for (let t = new Date(start); t.getTime() + step * 60000 <= end.getTime(); t = new Date(t.getTime() + step * 60000)) {
-      if (t < now) continue;
-      // lunch
-      const tEnd = new Date(t.getTime() + step * 60000);
+    const out: Slot[] = [];
+    for (let t = new Date(start); t.getTime() + stepMin * 60000 <= end.getTime(); t = new Date(t.getTime() + stepMin * 60000)) {
+      const tEnd = new Date(t.getTime() + stepMin * 60000);
       if (lunchStart && lunchEnd && tEnd > lunchStart && t < lunchEnd) continue;
-      // ocupados
-      const overlap = ocupados.some((o) => {
-        const os = new Date(o.data_hora); const oe = new Date(os.getTime() + (o.duracao_minutos || 30) * 60000);
+      const ocupado = ocupados.some((o) => {
+        const os = new Date(o.data_hora);
+        const oe = new Date(os.getTime() + (o.duracao_minutos || 30) * 60000);
         return t < oe && tEnd > os;
       });
-      if (overlap) continue;
-      out.push(new Date(t));
+      const tooSoon = t < minAllowed;
+      out.push({ time: new Date(t), ocupado, available: !ocupado && !tooSoon });
     }
     return out;
   }, [selDia, selServico, horarios, ocupados]);
@@ -115,8 +125,11 @@ function PublicBooking() {
     if (!selServico || !selHora) return;
     if (dados.nome.trim().length < 2) return toast.error("Informe seu nome");
     if (dados.whatsapp.replace(/\D/g, "").length < 10) return toast.error("WhatsApp inválido");
+    if (selHora.getTime() < Date.now() + MIN_ADVANCE_MS) {
+      return toast.error("Esse horário não está mais disponível. Escolha um horário com pelo menos 30 minutos de antecedência.");
+    }
     setLoading(true);
-    const { error } = await supabase.from("agendamentos").insert({
+    const { data: inserted, error } = await supabase.from("agendamentos").insert({
       barbeiro_id: barbeiro.id,
       servico_id: selServico.id,
       cliente_nome: dados.nome.trim(),
@@ -125,33 +138,30 @@ function PublicBooking() {
       preco: selServico.preco,
       duracao_minutos: selServico.duracao_minutos,
       status: "confirmado",
-    });
+    }).select("id").single();
     setLoading(false);
     if (error) return toast.error(error.message);
+
+    // Dispara aviso "em cima da hora" — falha silenciosa
+    if (inserted?.id) {
+      supabase.functions.invoke("notificar-agendamento", { body: { agendamento_id: inserted.id } }).catch(() => {});
+    }
     setStep("sucesso");
   }
 
   return (
     <div style={{ background: "#000", minHeight: "calc(100vh - 64px)", padding: "32px 16px" }}>
       <div className="mx-auto" style={{ maxWidth: 560 }}>
-        {/* Header barbeiro */}
         <div className="flex flex-col items-center text-center">
-          <div
-            className="flex items-center justify-center"
-            style={{
-              width: 80, height: 80, borderRadius: "50%", overflow: "hidden",
-              background: "#2B2D42", border: "2px solid #C1121F",
-            }}
-          >
+          <div className="flex items-center justify-center"
+            style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: "#2B2D42", border: "2px solid #C1121F" }}>
             {barbeiro.foto_url ? (
               <img src={barbeiro.foto_url} alt={barbeiro.nome_profissional} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <span className="font-display" style={{ color: "#C1121F", fontSize: 32 }}>{(barbeiro.nome_profissional || "?")[0]}</span>
             )}
           </div>
-          <h1 className="font-display mt-4" style={{ color: "#F8F9FA", fontSize: 30 }}>
-            {barbeiro.nome_profissional}
-          </h1>
+          <h1 className="font-display mt-4" style={{ color: "#F8F9FA", fontSize: 30 }}>{barbeiro.nome_profissional}</h1>
           {barbeiro.cidade && (
             <p style={{ color: "#ADB5BD", fontSize: 13, marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
               <MapPin size={12} /> {barbeiro.cidade}
@@ -192,6 +202,7 @@ function PublicBooking() {
         {step === "dia" && (
           <div className="mt-8">
             <h2 className="font-display" style={{ color: "#F8F9FA", fontSize: 20, letterSpacing: 1 }}>ESCOLHA O DIA</h2>
+            <p style={{ color: "#ADB5BD", fontSize: 12, marginTop: 4 }}>Disponível nos próximos 30 dias</p>
             <div className="grid gap-2 mt-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))" }}>
               {dias.map((d) => (
                 <button key={d.toISOString()} onClick={() => { setSelDia(d); setStep("horario"); }}
@@ -200,9 +211,7 @@ function PublicBooking() {
                     {d.toLocaleDateString("pt-BR", { weekday: "short" })}
                   </div>
                   <div className="font-display" style={{ color: "#F8F9FA", fontSize: 22 }}>{d.getDate()}</div>
-                  <div style={{ color: "#ADB5BD", fontSize: 10 }}>
-                    {d.toLocaleDateString("pt-BR", { month: "short" })}
-                  </div>
+                  <div style={{ color: "#ADB5BD", fontSize: 10 }}>{d.toLocaleDateString("pt-BR", { month: "short" })}</div>
                 </button>
               ))}
             </div>
@@ -211,18 +220,35 @@ function PublicBooking() {
 
         {step === "horario" && selDia && (
           <div className="mt-8">
-            <h2 className="font-display" style={{ color: "#F8F9FA", fontSize: 20, letterSpacing: 1 }}>HORÁRIOS DISPONÍVEIS</h2>
+            <h2 className="font-display" style={{ color: "#F8F9FA", fontSize: 20, letterSpacing: 1 }}>HORÁRIOS</h2>
             <p style={{ color: "#ADB5BD", fontSize: 12, marginTop: 4 }}>
               {selDia.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
             </p>
-            <div className="grid gap-2 mt-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(86px, 1fr))" }}>
+            <div className="grid gap-2 mt-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))" }}>
               {slots.length === 0 && <p style={{ color: "#ADB5BD" }}>Sem horários neste dia.</p>}
-              {slots.map((t) => (
-                <button key={t.toISOString()} onClick={() => { setSelHora(t); setStep("dados"); }}
-                  className="font-display" style={{ background: "#2B2D42", color: "#F8F9FA", borderRadius: 10, padding: 12, cursor: "pointer", border: 0, fontSize: 16 }}>
-                  {t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                </button>
-              ))}
+              {slots.map((s) => {
+                if (s.available) {
+                  return (
+                    <button key={s.time.toISOString()} onClick={() => { setSelHora(s.time); setStep("dados"); }}
+                      className="font-display"
+                      style={{ background: "#2B2D42", color: "#F8F9FA", borderRadius: 10, padding: 12, cursor: "pointer", border: 0, fontSize: 16 }}>
+                      {s.time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </button>
+                  );
+                }
+                return (
+                  <div key={s.time.toISOString()} className="font-display"
+                    title={s.ocupado ? "Ocupado" : "Indisponível"}
+                    style={{
+                      background: "#2B2D42", color: "#ADB5BD", borderRadius: 10, padding: 12,
+                      opacity: 0.4, fontSize: 16, textAlign: "center", cursor: "not-allowed",
+                      display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}>
+                    <span>{s.time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    <X size={12} />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

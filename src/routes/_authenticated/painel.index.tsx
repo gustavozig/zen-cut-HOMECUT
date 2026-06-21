@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBarbeiro } from "@/hooks/use-barbeiro";
 import { formatBRL } from "@/lib/slug";
-import { Copy, Calendar, Settings as SettingsIcon, ChevronRight } from "lucide-react";
+import { Copy, Calendar, Settings as SettingsIcon, ChevronRight, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 type Agendamento = {
@@ -126,6 +126,16 @@ function PainelHome() {
           <span style={{ color: "#F8F9FA", display: "inline-flex", alignItems: "center", gap: 10 }}><Copy size={18} color="#C1121F" />Copiar meu link</span>
           <ChevronRight size={16} color="#ADB5BD" />
         </button>
+        <Link to="/painel/bloquear" className="card-hc flex items-center justify-between" style={{ textDecoration: "none" }}>
+          <span style={{ color: "#F8F9FA", display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <Ban size={18} color="#C1121F" />
+            <span>
+              <div>🚫 Bloquear dia</div>
+              <div style={{ color: "#ADB5BD", fontSize: 11, fontWeight: 400 }}>folga / ausência</div>
+            </span>
+          </span>
+          <ChevronRight size={16} color="#ADB5BD" />
+        </Link>
         <Link to="/painel/configuracoes" className="card-hc flex items-center justify-between" style={{ textDecoration: "none" }}>
           <span style={{ color: "#F8F9FA", display: "inline-flex", alignItems: "center", gap: 10 }}><SettingsIcon size={18} color="#C1121F" />Configurações</span>
           <ChevronRight size={16} color="#ADB5BD" />

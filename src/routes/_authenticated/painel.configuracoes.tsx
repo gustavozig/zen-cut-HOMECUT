@@ -16,19 +16,23 @@ const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sáb
 
 function Configuracoes() {
   const { barbeiro, reload } = useBarbeiro();
-  const [perfil, setPerfil] = useState({ nome: "", nome_profissional: "", whatsapp: "", cidade: "", foto_url: "" });
+  const [perfil, setPerfil] = useState({ nome: "", nome_profissional: "", whatsapp: "", cidade: "", foto_url: "", zapi_instance_id: "", zapi_token: "", zapi_client_token: "" });
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [novo, setNovo] = useState({ nome: "", duracao_minutos: 30, preco: 0 });
   const [horarios, setHorarios] = useState<Horario[]>([]);
 
   useEffect(() => {
     if (!barbeiro) return;
+    const b = barbeiro as typeof barbeiro & { zapi_instance_id?: string | null; zapi_token?: string | null; zapi_client_token?: string | null };
     setPerfil({
       nome: barbeiro.nome,
       nome_profissional: barbeiro.nome_profissional,
       whatsapp: barbeiro.whatsapp ?? "",
       cidade: barbeiro.cidade ?? "",
       foto_url: barbeiro.foto_url ?? "",
+      zapi_instance_id: b.zapi_instance_id ?? "",
+      zapi_token: b.zapi_token ?? "",
+      zapi_client_token: b.zapi_client_token ?? "",
     });
     (async () => {
       const { data: s } = await supabase.from("servicos").select("*").eq("barbeiro_id", barbeiro.id).order("criado_em");
@@ -168,6 +172,19 @@ function Configuracoes() {
             </a>
           </div>
         </div>
+      </Section>
+
+      {/* Z-API */}
+      <Section title="NOTIFICAÇÕES (Z-API)">
+        <p style={{ color: "#ADB5BD", fontSize: 13, marginBottom: 12 }}>
+          Receba aviso no seu WhatsApp quando alguém marcar em cima da hora (menos de 1 hora). Opcional.
+        </p>
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <input className="input-hc" placeholder="Z-API Instance ID" value={perfil.zapi_instance_id} onChange={(e) => setPerfil({ ...perfil, zapi_instance_id: e.target.value })} />
+          <input className="input-hc" placeholder="Z-API Token" value={perfil.zapi_token} onChange={(e) => setPerfil({ ...perfil, zapi_token: e.target.value })} />
+          <input className="input-hc" placeholder="Client-Token (opcional)" value={perfil.zapi_client_token} onChange={(e) => setPerfil({ ...perfil, zapi_client_token: e.target.value })} />
+        </div>
+        <button onClick={salvarPerfil} className="btn-primary mt-4">Salvar credenciais</button>
       </Section>
     </div>
   );
