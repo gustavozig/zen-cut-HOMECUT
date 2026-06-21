@@ -24,15 +24,20 @@ function PainelLayout() {
   }, [pathname]);
 
   useEffect(() => {
-    const el = itemRefs.current[activeIndex];
-    const nav = navRef.current;
-    if (!el || !nav) return;
-    const navRect = nav.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    setIndicator({
-      left: elRect.left - navRect.left,
-      width: elRect.width,
-    });
+    const update = () => {
+      const el = itemRefs.current[activeIndex];
+      const nav = navRef.current;
+      if (!el || !nav) return;
+      const navRect = nav.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      setIndicator({
+        left: elRect.left - navRect.left,
+        width: elRect.width,
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, [activeIndex, pathname]);
 
   return (
