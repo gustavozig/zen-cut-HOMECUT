@@ -1,1 +1,4 @@
 project_id = "cagfwyzjfcdytdjcqttm"
+
+[functions.notificar-agendamento]
+verify_jwt = false
