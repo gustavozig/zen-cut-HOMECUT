@@ -173,6 +173,19 @@ function Configuracoes() {
           </div>
         </div>
       </Section>
+
+      {/* Z-API */}
+      <Section title="NOTIFICAÇÕES (Z-API)">
+        <p style={{ color: "#ADB5BD", fontSize: 13, marginBottom: 12 }}>
+          Receba aviso no seu WhatsApp quando alguém marcar em cima da hora (menos de 1 hora). Opcional.
+        </p>
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <input className="input-hc" placeholder="Z-API Instance ID" value={perfil.zapi_instance_id} onChange={(e) => setPerfil({ ...perfil, zapi_instance_id: e.target.value })} />
+          <input className="input-hc" placeholder="Z-API Token" value={perfil.zapi_token} onChange={(e) => setPerfil({ ...perfil, zapi_token: e.target.value })} />
+          <input className="input-hc" placeholder="Client-Token (opcional)" value={perfil.zapi_client_token} onChange={(e) => setPerfil({ ...perfil, zapi_client_token: e.target.value })} />
+        </div>
+        <button onClick={salvarPerfil} className="btn-primary mt-4">Salvar credenciais</button>
+      </Section>
     </div>
   );
 }
