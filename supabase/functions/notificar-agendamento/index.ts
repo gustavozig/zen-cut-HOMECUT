@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const servicoNome = (ag as { servicos?: { nome?: string } | null }).servicos?.nome ?? "serviço";
     const phone = String(b.whatsapp).replace(/\D/g, "");
     const phoneFull = phone.startsWith("55") ? phone : `55${phone}`;
-    const message = `⚡ Agendamento em cima da hora! ${ag.cliente_nome} (WhatsApp: ${ag.cliente_whatsapp}) acabou de marcar ${servicoNome} para hoje às ${horario}. Se prepara!`;
+    const message = `⚡ Agendamento em cima da hora! ${ag.cliente_nome} (WhatsApp: ${ag.cliente_whatsapp}) marcou ${servicoNome} hoje às ${horario}`;
 
     const url = `https://api.z-api.io/instances/${b.zapi_instance_id}/token/${b.zapi_token}/send-text`;
     try {
