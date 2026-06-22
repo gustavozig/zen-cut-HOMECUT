@@ -31,11 +31,15 @@ Deno.serve(async (req) => {
 
     const { data: b } = await supabase
       .from("barbeiros")
-      .select("whatsapp, zapi_instance_id, zapi_token, zapi_client_token")
+      .select("whatsapp")
       .eq("id", ag.barbeiro_id as string)
       .maybeSingle();
 
-    if (!b?.zapi_instance_id || !b?.zapi_token || !b?.whatsapp) {
+    const zapiInstance = Deno.env.get("ZAPI_INSTANCE_ID");
+    const zapiToken = Deno.env.get("ZAPI_TOKEN");
+    const zapiClientToken = Deno.env.get("ZAPI_CLIENT_TOKEN");
+
+    if (!zapiInstance || !zapiToken || !b?.whatsapp) {
       return json({ ok: true, skipped: true, reason: "zapi_not_configured" });
     }
 
@@ -45,14 +49,15 @@ Deno.serve(async (req) => {
     const phoneFull = phone.startsWith("55") ? phone : `55${phone}`;
     const message = `⚡ Agendamento em cima da hora! ${ag.cliente_nome} (WhatsApp: ${ag.cliente_whatsapp}) marcou ${servicoNome} hoje às ${horario}`;
 
-    const url = `https://api.z-api.io/instances/${b.zapi_instance_id}/token/${b.zapi_token}/send-text`;
+    const url = `https://api.z-api.io/instances/${zapiInstance}/token/${zapiToken}/send-text`;
     try {
       const r = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(b.zapi_client_token ? { "Client-Token": b.zapi_client_token } : {}),
+          ...(zapiClientToken ? { "Client-Token": zapiClientToken } : {}),
         },
+
         body: JSON.stringify({ phone: phoneFull, message }),
       });
       const body = await r.text();
