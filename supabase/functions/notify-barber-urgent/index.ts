@@ -1,6 +1,6 @@
 // Avisa o barbeiro via WhatsApp quando um agendamento é criado em cima da hora (<1h).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { sendWhatsapp } from "../send-whatsapp/index.ts";
+import { sendWhatsapp } from "../_shared/zapi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

@@ -1,6 +1,6 @@
 // Roda 1x ao dia (10h) via pg_cron. Envia mensagem para clientes inativos há 20+ dias.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { sendWhatsapp } from "../send-whatsapp/index.ts";
+import { sendWhatsapp } from "../_shared/zapi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

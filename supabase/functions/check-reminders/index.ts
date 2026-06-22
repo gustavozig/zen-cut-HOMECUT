@@ -1,6 +1,6 @@
 // Roda a cada 15min via pg_cron. Envia lembretes ~2h antes do corte.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { sendWhatsapp } from "../send-whatsapp/index.ts";
+import { sendWhatsapp } from "../_shared/zapi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
