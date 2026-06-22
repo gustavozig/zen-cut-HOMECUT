@@ -2,3 +2,15 @@ project_id = "cagfwyzjfcdytdjcqttm"
 
 [functions.notificar-agendamento]
 verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.check-reminders]
+verify_jwt = false
+
+[functions.check-reactivation]
+verify_jwt = false
+
+[functions.notify-barber-urgent]
+verify_jwt = false
