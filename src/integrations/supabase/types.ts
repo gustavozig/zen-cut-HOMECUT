@@ -23,6 +23,7 @@ export type Database = {
           data_hora: string
           duracao_minutos: number
           id: string
+          lembrete_enviado: boolean
           preco: number
           servico_id: string
           status: string
@@ -35,6 +36,7 @@ export type Database = {
           data_hora: string
           duracao_minutos?: number
           id?: string
+          lembrete_enviado?: boolean
           preco?: number
           servico_id: string
           status?: string
@@ -47,6 +49,7 @@ export type Database = {
           data_hora?: string
           duracao_minutos?: number
           id?: string
+          lembrete_enviado?: boolean
           preco?: number
           servico_id?: string
           status?: string
@@ -121,6 +124,7 @@ export type Database = {
           barbeiro_id: string
           id: string
           nome: string
+          reativacao_enviada_em: string | null
           total_agendamentos: number
           ultimo_agendamento: string | null
           whatsapp: string
@@ -129,6 +133,7 @@ export type Database = {
           barbeiro_id: string
           id?: string
           nome: string
+          reativacao_enviada_em?: string | null
           total_agendamentos?: number
           ultimo_agendamento?: string | null
           whatsapp: string
@@ -137,6 +142,7 @@ export type Database = {
           barbeiro_id?: string
           id?: string
           nome?: string
+          reativacao_enviada_em?: string | null
           total_agendamentos?: number
           ultimo_agendamento?: string | null
           whatsapp?: string
