@@ -24,6 +24,7 @@ function CadastroPage() {
     senha: "",
     confirmar: "",
   });
+  const [lgpdAceito, setLgpdAceito] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function up(k: keyof typeof form) {
@@ -32,6 +33,7 @@ function CadastroPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!lgpdAceito) return toast.error("Aceite os Termos de Uso e a Política de Privacidade para continuar.");
     if (form.senha.length < 6) return toast.error("A senha precisa ter ao menos 6 caracteres.");
     if (form.senha !== form.confirmar) return toast.error("As senhas não conferem.");
     setLoading(true);
@@ -77,9 +79,9 @@ function CadastroPage() {
       return toast.error(err2.message);
     }
 
-    // Default: criar horários padrão seg-sex 9-18
+    // Default: criar horários padrão seg-sáb 9-18
     const horarios = [1, 2, 3, 4, 5, 6].map((d) => ({
-      barbeiro_id: undefined as unknown as string, // we'll fill below
+      barbeiro_id: undefined as unknown as string,
       dia_semana: d,
       hora_inicio: "09:00",
       hora_fim: "18:00",
@@ -118,7 +120,62 @@ function CadastroPage() {
           <input className="input-hc" placeholder="WhatsApp (com DDD)" value={form.whatsapp} onChange={up("whatsapp")} required />
           <input className="input-hc" type="password" placeholder="Senha (mín. 6)" value={form.senha} onChange={up("senha")} required />
           <input className="input-hc" type="password" placeholder="Confirmar senha" value={form.confirmar} onChange={up("confirmar")} required />
-          <button disabled={loading} className="btn-primary mt-2">
+
+          {/* LGPD checkbox */}
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              cursor: "pointer",
+              marginTop: 4,
+            }}
+          >
+            <span style={{ position: "relative", flexShrink: 0, marginTop: 2 }}>
+              <input
+                type="checkbox"
+                checked={lgpdAceito}
+                onChange={(e) => setLgpdAceito(e.target.checked)}
+                style={{ opacity: 0, position: "absolute", inset: 0, cursor: "pointer" }}
+              />
+              <span
+                style={{
+                  display: "block",
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  border: `2px solid ${lgpdAceito ? "#C1121F" : "#ADB5BD"}`,
+                  background: lgpdAceito ? "#C1121F" : "transparent",
+                  transition: "background 150ms ease, border-color 150ms ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {lgpdAceito && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="#F8F9FA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+            </span>
+            <span style={{ color: "#ADB5BD", fontSize: 13, lineHeight: 1.5 }}>
+              Li e concordo com os{" "}
+              <a href="/termos" target="_blank" rel="noreferrer" style={{ color: "#C1121F" }} onClick={(e) => e.stopPropagation()}>
+                Termos de Uso
+              </a>
+              {" "}e a{" "}
+              <a href="/privacidade" target="_blank" rel="noreferrer" style={{ color: "#C1121F" }} onClick={(e) => e.stopPropagation()}>
+                Política de Privacidade
+              </a>
+            </span>
+          </label>
+
+          <button
+            disabled={loading || !lgpdAceito}
+            className="btn-primary mt-2"
+            style={{ opacity: lgpdAceito ? 1 : 0.5 }}
+          >
             {loading ? "Criando..." : "Criar minha conta grátis"}
           </button>
         </form>

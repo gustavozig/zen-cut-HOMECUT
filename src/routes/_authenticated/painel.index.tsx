@@ -13,7 +13,7 @@ type Agendamento = {
   data_hora: string;
   preco: number;
   status: "confirmado" | "concluido" | "falta" | "cancelado";
-  servicos: { nome: string } | null;
+  servicos: { nome: string; preco: number; duracao_minutos: number } | null;
 };
 
 export const Route = createFileRoute("/_authenticated/painel/")({
@@ -26,22 +26,25 @@ function PainelHome() {
 
   async function load() {
     if (!barbeiro) return;
-    const start = new Date(); start.setHours(0,0,0,0);
-    const end = new Date(); end.setHours(23,59,59,999);
-    const { data } = await supabase
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const end = new Date(); end.setHours(23, 59, 59, 999);
+    const { data, error } = await supabase
       .from("agendamentos")
-      .select("id, cliente_nome, cliente_whatsapp, data_hora, preco, status, servicos(nome)")
+      .select("*, servicos(nome, preco, duracao_minutos)")
       .eq("barbeiro_id", barbeiro.id)
+      .neq("status", "cancelado")
       .gte("data_hora", start.toISOString())
       .lte("data_hora", end.toISOString())
-      .order("data_hora");
+      .order("data_hora", { ascending: true });
+    if (error) { console.error("[painel.index] load error:", error); return; }
     setItems((data as unknown as Agendamento[]) ?? []);
   }
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [barbeiro?.id]);
 
   async function update(id: string, status: "concluido" | "falta") {
-    await supabase.from("agendamentos").update({ status }).eq("id", id);
+    const { error } = await supabase.from("agendamentos").update({ status }).eq("id", id);
+    if (error) { toast.error("Erro ao atualizar"); return; }
     toast.success(status === "concluido" ? "Marcado como concluído" : "Marcado como falta");
     load();
   }

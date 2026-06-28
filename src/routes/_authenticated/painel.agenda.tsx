@@ -17,7 +17,7 @@ type Ag = {
   data_hora: string;
   preco: number;
   status: string;
-  servicos: { nome: string } | null;
+  servicos: { nome: string; preco: number; duracao_minutos: number } | null;
 };
 
 const WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -48,50 +48,52 @@ function AgendaMobile() {
     return Array.from({ length: last }, (_, i) => new Date(y, m, i + 1));
   }, [cursor]);
 
-  // Carrega o mês inteiro p/ saber quais dias têm agendamento (1 query só)
-  useEffect(() => {
+  const loadMonth = useCallback(async () => {
     if (!barbeiro) return;
     const start = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
     const end = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("agendamentos")
-        .select("data_hora")
-        .eq("barbeiro_id", barbeiro.id)
-        .neq("status", "cancelado")
-        .gte("data_hora", start.toISOString())
-        .lt("data_hora", end.toISOString());
-      if (cancelled) return;
-      const s = new Set<string>();
-      (data ?? []).forEach((r: { data_hora: string }) => {
-        const d = new Date(r.data_hora);
-        s.add(ymd(d));
-      });
-      setDaysWithAg(s);
-    })();
-    return () => { cancelled = true; };
+    const { data, error } = await supabase
+      .from("agendamentos")
+      .select("data_hora")
+      .eq("barbeiro_id", barbeiro.id)
+      .neq("status", "cancelado")
+      .gte("data_hora", start.toISOString())
+      .lt("data_hora", end.toISOString());
+    if (error) { console.error("[agenda] loadMonth error:", error); return; }
+    const s = new Set<string>();
+    (data ?? []).forEach((r: { data_hora: string }) => {
+      const d = new Date(r.data_hora);
+      s.add(ymd(d));
+    });
+    setDaysWithAg(s);
   }, [barbeiro?.id, cursor]);
 
-  // Carrega agendamentos do dia selecionado
-  useEffect(() => {
+  const loadDay = useCallback(async () => {
     if (!barbeiro) return;
     const start = new Date(selected); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 1);
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("agendamentos")
-        .select("id, cliente_nome, cliente_whatsapp, data_hora, preco, status, servicos(nome)")
-        .eq("barbeiro_id", barbeiro.id)
-        .gte("data_hora", start.toISOString())
-        .lt("data_hora", end.toISOString())
-        .order("data_hora");
-      if (cancelled) return;
-      setItems((data as unknown as Ag[]) ?? []);
-    })();
-    return () => { cancelled = true; };
+    const { data, error } = await supabase
+      .from("agendamentos")
+      .select("*, servicos(nome, preco, duracao_minutos)")
+      .eq("barbeiro_id", barbeiro.id)
+      .gte("data_hora", start.toISOString())
+      .lt("data_hora", end.toISOString())
+      .order("data_hora", { ascending: true });
+    if (error) { console.error("[agenda] loadDay error:", error); return; }
+    setItems((data as unknown as Ag[]) ?? []);
   }, [barbeiro?.id, selected]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadMonth().then(() => { if (cancelled) return; });
+    return () => { cancelled = true; };
+  }, [loadMonth]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadDay().then(() => { if (cancelled) return; });
+    return () => { cancelled = true; };
+  }, [loadDay]);
 
   // Centraliza o dia selecionado na régua
   useEffect(() => {
@@ -129,7 +131,8 @@ function AgendaMobile() {
     if (error) { toast.error("Erro ao atualizar"); return; }
     toast.success(label);
     setDetail(null);
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, status } : i));
+    // Atualiza lista do dia e pontos do mês
+    await Promise.all([loadDay(), loadMonth()]);
   }
 
   return (
@@ -204,7 +207,7 @@ function AgendaMobile() {
           onConcluir={() => updateStatus(detail.id, "concluido", "Marcado como concluído")}
           onFalta={() => updateStatus(detail.id, "falta", "Marcado como falta")}
           onCancelar={() => {
-            if (!confirm("Cancelar este agendamento?")) return;
+            if (!confirm("Cancelar este agendamento? O horário ficará disponível novamente.")) return;
             updateStatus(detail.id, "cancelado", "Agendamento cancelado");
           }}
         />

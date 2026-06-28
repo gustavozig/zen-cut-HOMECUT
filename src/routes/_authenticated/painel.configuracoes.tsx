@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBarbeiro } from "@/hooks/use-barbeiro";
-import { Copy, Plus, Trash2, Share2 } from "lucide-react";
+import { Copy, Plus, Trash2, Share2, Download, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/painel/configuracoes")({
@@ -15,11 +15,16 @@ type Horario = { id: string; dia_semana: number; hora_inicio: string; hora_fim: 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 function Configuracoes() {
+  const navigate = useNavigate();
   const { barbeiro, reload } = useBarbeiro();
   const [perfil, setPerfil] = useState({ nome: "", nome_profissional: "", whatsapp: "", cidade: "", foto_url: "" });
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [novo, setNovo] = useState({ nome: "", duracao_minutos: 30, preco: 0 });
   const [horarios, setHorarios] = useState<Horario[]>([]);
+  const [exporting, setExporting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!barbeiro) return;
@@ -49,7 +54,6 @@ function Configuracoes() {
     reload();
   }
 
-
   async function addServico() {
     if (!novo.nome) return toast.error("Nome obrigatório");
     const { data, error } = await supabase.from("servicos").insert({ ...novo, barbeiro_id: barbeiro!.id }).select().single();
@@ -57,6 +61,7 @@ function Configuracoes() {
     setServicos([...servicos, data as Servico]);
     setNovo({ nome: "", duracao_minutos: 30, preco: 0 });
   }
+
   async function delServico(id: string) {
     if (!confirm("Excluir serviço?")) return;
     await supabase.from("servicos").delete().eq("id", id);
@@ -79,6 +84,50 @@ function Configuracoes() {
   async function updHorario(id: string, patch: Partial<Horario>) {
     await supabase.from("horarios_trabalho").update(patch).eq("id", id);
     setHorarios(horarios.map((h) => h.id === id ? { ...h, ...patch } : h));
+  }
+
+  async function exportarDados() {
+    if (!barbeiro) return;
+    setExporting(true);
+    const [{ data: b }, { data: servs }, { data: agends }, { data: clients }] = await Promise.all([
+      supabase.from("barbeiros").select("*").eq("id", barbeiro.id).single(),
+      supabase.from("servicos").select("*").eq("barbeiro_id", barbeiro.id),
+      supabase.from("agendamentos").select("*").eq("barbeiro_id", barbeiro.id),
+      supabase.from("clientes").select("*").eq("barbeiro_id", barbeiro.id),
+    ]);
+    const payload = {
+      exportado_em: new Date().toISOString(),
+      barbeiro: b,
+      servicos: servs ?? [],
+      agendamentos: agends ?? [],
+      clientes: clients ?? [],
+    };
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "homecut-meus-dados.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setExporting(false);
+    toast.success("Dados exportados com sucesso");
+  }
+
+  async function excluirConta() {
+    if (!barbeiro) return;
+    setDeleting(true);
+    const { error } = await supabase.from("barbeiros").delete().eq("id", barbeiro.id);
+    if (error) {
+      setDeleting(false);
+      toast.error(error.message);
+      return;
+    }
+    await supabase.auth.signOut();
+    setDeleting(false);
+    navigate({ to: "/" });
   }
 
   return (
@@ -170,6 +219,141 @@ function Configuracoes() {
           </div>
         </div>
       </Section>
+
+      {/* LGPD — Seus dados e privacidade */}
+      <section>
+        <h2 className="font-display" style={{ color: "#F8F9FA", fontSize: 22, letterSpacing: 1 }}>SEUS DADOS E PRIVACIDADE</h2>
+        <div style={{ height: 2, width: 40, background: "#C1121F", marginTop: 6, marginBottom: 16 }} />
+        <div
+          style={{
+            background: "#2B2D42",
+            borderRadius: 12,
+            padding: 24,
+          }}
+        >
+          <p style={{ color: "#ADB5BD", fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+            Conforme a LGPD (Lei Geral de Proteção de Dados), você tem controle total sobre seus dados.
+            Exporte tudo que armazenamos sobre você ou encerre sua conta permanentemente.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={exportarDados}
+              disabled={exporting}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 20px",
+                borderRadius: 10,
+                background: "transparent",
+                border: "1px solid #ADB5BD",
+                color: "#F8F9FA",
+                fontWeight: 600,
+                cursor: exporting ? "default" : "pointer",
+                opacity: exporting ? 0.6 : 1,
+                fontSize: 14,
+                width: "fit-content",
+              }}
+            >
+              <Download size={16} />
+              {exporting ? "Exportando..." : "Exportar meus dados"}
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 20px",
+                borderRadius: 10,
+                background: "transparent",
+                border: "1px solid #C1121F",
+                color: "#C1121F",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: 14,
+                width: "fit-content",
+              }}
+            >
+              Excluir minha conta
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteModal && (
+        <div
+          onClick={() => { if (!deleting) setShowDeleteModal(false); }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: 16 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#2B2D42", borderRadius: 16, padding: 28, maxWidth: 420, width: "100%", position: "relative" }}
+          >
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleting}
+              style={{ position: "absolute", top: 14, right: 14, background: "none", border: 0, color: "#ADB5BD", cursor: "pointer" }}
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-display" style={{ color: "#F8F9FA", fontSize: 24 }}>Tem certeza?</h3>
+            <p style={{ color: "#ADB5BD", fontSize: 14, lineHeight: 1.6, marginTop: 12 }}>
+              Esta ação é <strong style={{ color: "#C1121F" }}>irreversível</strong>. Todos os seus dados serão permanentemente
+              apagados: perfil, serviços, horários e agendamentos. Não é possível recuperar a conta após a exclusão.
+            </p>
+            <div className="mt-6">
+              <label style={{ color: "#ADB5BD", fontSize: 13, display: "block", marginBottom: 8 }}>
+                Digite <strong style={{ color: "#F8F9FA" }}>EXCLUIR</strong> para confirmar:
+              </label>
+              <input
+                className="input-hc"
+                placeholder="EXCLUIR"
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                style={{ width: "100%" }}
+                disabled={deleting}
+              />
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteInput(""); }}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 10,
+                  background: "transparent",
+                  border: "1px solid #2B2D42",
+                  color: "#ADB5BD",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={excluirConta}
+                disabled={deleteInput !== "EXCLUIR" || deleting}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 10,
+                  background: "transparent",
+                  border: "1px solid #C1121F",
+                  color: "#C1121F",
+                  fontWeight: 600,
+                  cursor: deleteInput === "EXCLUIR" && !deleting ? "pointer" : "not-allowed",
+                  opacity: deleteInput === "EXCLUIR" && !deleting ? 1 : 0.45,
+                }}
+              >
+                {deleting ? "Excluindo..." : "Excluir permanentemente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

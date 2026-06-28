@@ -1,0 +1,123 @@
+Preciso corrigir e implementar 3 coisas no HomeCUT:
+
+═══════════════════════════════════
+1. AGENDAMENTOS NÃO APARECEM NO PAINEL
+═══════════════════════════════════
+No painel do barbeiro (/painel e /painel/agenda), os agendamentos 
+existem no banco mas não aparecem na tela.
+
+Corrige a query de busca de agendamentos:
+const { data } = await supabase
+  .from('agendamentos')
+  .select(`
+    *,
+    servicos(nome, preco, duracao_minutos)
+  `)
+  .eq('barbeiro_id', user.id)
+  .eq('status', 'confirmado')
+  .order('data_hora', { ascending: true })
+
+Verifica também:
+- Se user.id está correto (usar supabase.auth.getUser())
+- Se o RLS de SELECT em agendamentos usa USING (auth.uid() = barbeiro_id)
+- Se os cards do painel inicial filtram agendamentos do dia atual
+
+═══════════════════════════════════
+2. CANCELAR AGENDAMENTO NA AGENDA
+═══════════════════════════════════
+Na página /painel/agenda, ao clicar em um agendamento e tentar 
+cancelar, o horário não é liberado no link público.
+
+Corrige para:
+- Ao cancelar, fazer UPDATE status = 'cancelado' no agendamento
+- Após cancelar, recarregar a lista de agendamentos
+- Na página pública /b/[slug], a query de horários ocupados deve 
+  filtrar APENAS status = 'confirmado', nunca 'cancelado' ou 'concluido'
+- Confirma que existe botão de cancelar em cada card de agendamento 
+  na agenda do barbeiro
+
+═══════════════════════════════════
+3. LGPD — IMPLEMENTAÇÃO COMPLETA
+═══════════════════════════════════
+Implementa conformidade com a LGPD brasileira:
+
+A) PÁGINA /privacidade (pública):
+Título: "Política de Privacidade" | Atualização: junho de 2026
+Seções:
+- Quem somos: HomeCUT, operado por Gustavo Rafael Brietzig, 
+  Joinville/SC. Contato: contato@homecut.com.br
+- Dados coletados do BARBEIRO: nome, email, WhatsApp, cidade, foto.
+  Base legal: execução de contrato (Art. 7º, V, LGPD)
+- Dados coletados do CLIENTE: nome e WhatsApp ao agendar.
+  Base legal: legítimo interesse para lembrete (Art. 7º, IX, LGPD)
+- Como usamos: agendamento, lembretes WhatsApp, emails transacionais
+- Terceiros: Supabase (armazenamento), Z-API (WhatsApp), 
+  Resend (emails)
+- Retenção: conta ativa + 30 dias após exclusão
+- Direitos do titular (Art. 18 LGPD): acesso, correção, exclusão, 
+  exportação, revogação. Contato: contato@homecut.com.br
+- Cookies: apenas técnicos/essenciais, sem rastreamento
+- DPO: Gustavo Rafael Brietzig — contato@homecut.com.br
+
+B) PÁGINA /termos (pública):
+Título: "Termos de Uso" | Atualização: junho de 2026
+Seções:
+- O serviço: agenda online para barbeiros autônomos
+- Conta e responsabilidade do usuário
+- Plano: R$79/mês após 30 dias grátis, cancelamento sem multa
+- Uso aceitável: proibido spam, uso ilegal, revenda
+- Limitação de responsabilidade
+- Lei aplicável: Brasil, foro Joinville/SC
+- Contato: contato@homecut.com.br
+
+C) CADASTRO /cadastro:
+Adicionar checkbox obrigatório ANTES do botão de criar conta:
+"Li e concordo com os Termos de Uso e a Política de Privacidade"
+- [Termos de Uso] → link para /termos (abre em nova aba)
+- [Política de Privacidade] → link para /privacidade (abre em nova aba)
+- Botão "Criar conta" desabilitado (opacity 0.5) até marcar o checkbox
+- Estilo: checkbox com borda #ADB5BD, marcado fundo #C1121F
+- Texto em #ADB5BD, font-size 13px, links em #C1121F
+
+D) PÁGINA PÚBLICA /b/[slug]:
+Adicionar texto abaixo do formulário antes do botão confirmar:
+"Seus dados (nome e WhatsApp) serão usados apenas para este 
+agendamento e envio de lembrete. Não compartilhamos com terceiros. 
+Ver Política de Privacidade."
+- Texto em #ADB5BD, font-size 12px
+- "Política de Privacidade" em #C1121F linkando para /privacidade
+
+E) FOOTER da landing page (/):
+Adicionar após "© 2026 HomeCUT · Feito para barbeiros autônomos":
+" · Termos de Uso · Privacidade"
+Links em #ADB5BD com hover #C1121F
+
+F) CONFIGURAÇÕES /painel/configuracoes:
+Adicionar seção no final "Seus dados e privacidade":
+- Card com fundo #2B2D42, border-radius 12px, padding 24px
+- Título: "Seus dados e privacidade" em #F8F9FA
+- Subtítulo: "Conforme a LGPD, você tem controle total sobre seus dados."
+
+Botão 1 — "Exportar meus dados":
+- Busca no Supabase: barbeiros, servicos, agendamentos, clientes 
+  (onde barbeiro_id = user.id)
+- Faz download do arquivo "homecut-meus-dados.json"
+- Estilo: borda #ADB5BD, texto #F8F9FA, fundo transparente
+
+Botão 2 — "Excluir minha conta":
+- Abre modal de confirmação
+- Título: "Tem certeza?" | Texto explicando que é irreversível
+- Input: "Digite EXCLUIR para confirmar"
+- Botão confirmar só habilita quando digitar exatamente "EXCLUIR"
+- Ao confirmar: deletar dados do barbeiro e fazer signOut
+- Redirecionar para /
+- Estilo botão: borda #C1121F, texto #C1121F, fundo transparente
+
+═══════════════════════════════════
+REGRAS GERAIS
+═══════════════════════════════════
+- Paleta: fundo #000000, cards #2B2D42, destaque #C1121F, 
+  texto #F8F9FA, secundário #ADB5BD
+- Mobile first em todas as telas
+- Nunca fundo branco
+- Após implementar, fazer republish

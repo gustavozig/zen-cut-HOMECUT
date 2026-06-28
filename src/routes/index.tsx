@@ -28,6 +28,24 @@ function LandingPage() {
       <footer style={{ padding: "28px 24px", background: "#000", textAlign: "center" }}>
         <p style={{ color: "#ADB5BD", fontSize: 12 }}>
           © {new Date().getFullYear()} HomeCUT · Feito para barbeiros autônomos
+          {" · "}
+          <a
+            href="/termos"
+            style={{ color: "#ADB5BD", textDecoration: "none", transition: "color 150ms" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#C1121F")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#ADB5BD")}
+          >
+            Termos de Uso
+          </a>
+          {" · "}
+          <a
+            href="/privacidade"
+            style={{ color: "#ADB5BD", textDecoration: "none", transition: "color 150ms" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#C1121F")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#ADB5BD")}
+          >
+            Privacidade
+          </a>
         </p>
       </footer>
     </div>

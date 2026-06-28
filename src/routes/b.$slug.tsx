@@ -263,7 +263,11 @@ function PublicBooking() {
             <div className="flex flex-col gap-3 mt-4">
               <input className="input-hc" placeholder="Seu nome" value={dados.nome} onChange={(e) => setDados({ ...dados, nome: e.target.value })} maxLength={80} />
               <input className="input-hc" placeholder="WhatsApp (com DDD)" value={dados.whatsapp} onChange={(e) => setDados({ ...dados, whatsapp: e.target.value })} maxLength={20} />
-              <button onClick={confirmar} disabled={loading} className="btn-primary mt-2">
+              <p style={{ color: "#ADB5BD", fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>
+                Seus dados (nome e WhatsApp) serão usados apenas para este agendamento e envio de lembrete. Não compartilhamos com terceiros.{" "}
+                <a href="/privacidade" target="_blank" rel="noreferrer" style={{ color: "#C1121F" }}>Ver Política de Privacidade.</a>
+              </p>
+              <button onClick={confirmar} disabled={loading} className="btn-primary mt-1">
                 {loading ? "Confirmando..." : "Confirmar agendamento"}
               </button>
             </div>
