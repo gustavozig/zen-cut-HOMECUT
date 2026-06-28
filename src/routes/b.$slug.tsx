@@ -129,22 +129,20 @@ function PublicBooking() {
       return toast.error("Esse horário não está mais disponível. Escolha um horário com pelo menos 30 minutos de antecedência.");
     }
     setLoading(true);
-    const { data: inserted, error } = await supabase.from("agendamentos").insert({
-      barbeiro_id: barbeiro.id,
-      servico_id: selServico.id,
-      cliente_nome: dados.nome.trim(),
-      cliente_whatsapp: dados.whatsapp,
-      data_hora: selHora.toISOString(),
-      preco: selServico.preco,
-      duracao_minutos: selServico.duracao_minutos,
-      status: "confirmado",
-    }).select("id").single();
+    const { data: agendamentoId, error } = await supabase.rpc("criar_agendamento", {
+      p_barbeiro_id: barbeiro.id,
+      p_servico_id: selServico.id,
+      p_cliente_nome: dados.nome.trim(),
+      p_cliente_whatsapp: dados.whatsapp,
+      p_data_hora: selHora.toISOString(),
+      p_status: "confirmado",
+    });
     setLoading(false);
     if (error) return toast.error(error.message);
 
     // Dispara aviso "em cima da hora" — falha silenciosa
-    if (inserted?.id) {
-      supabase.functions.invoke("notificar-agendamento", { body: { agendamento_id: inserted.id } }).catch(() => {});
+    if (agendamentoId) {
+      supabase.functions.invoke("notificar-agendamento", { body: { agendamento_id: agendamentoId } }).catch(() => {});
     }
     setStep("sucesso");
   }
