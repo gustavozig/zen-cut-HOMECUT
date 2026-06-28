@@ -126,12 +126,24 @@ function AgendaMobile() {
 
   const visibleItems = useMemo(() => items.filter((i) => i.status !== "cancelado"), [items]);
 
-  async function updateStatus(id: string, status: string, label: string) {
-    const { error } = await supabase.from("agendamentos").update({ status }).eq("id", id);
-    if (error) { toast.error("Erro ao atualizar"); return; }
-    toast.success(label);
+  async function updateStatus(id: string, novoStatus: "concluido" | "falta" | "cancelado", label: string) {
+    const { data, error } = await supabase
+      .from("agendamentos")
+      .update({ status: novoStatus })
+      .eq("id", id)
+      .select("id");
+
+    if (error) {
+      console.error("[agenda] updateStatus error:", error);
+      toast.error("Erro ao atualizar: " + error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast.error("Não foi possível atualizar. Verifique as permissões.");
+      return;
+    }
     setDetail(null);
-    // Atualiza lista do dia e pontos do mês
+    toast.success(label);
     await Promise.all([loadDay(), loadMonth()]);
   }
 
